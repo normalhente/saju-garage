@@ -39,8 +39,9 @@ export default function BirthForm({ onSubmit }: Props) {
       exit={{ opacity: 0, y: -24 }}
       transition={{ duration: 0.4 }}
     >
+      <span className="form-badge">SAJU GARAGE</span>
       <h1>사주 개러지</h1>
-      <p className="subtitle">생년월일시를 입력하면 당신의 사주를 자동차로 조립해 드립니다</p>
+      <p className="subtitle">드라이버 정보를 등록하면 당신의 사주를 한 대의 자동차로 출고해 드립니다</p>
 
       <div className="field-row">
         <label>

@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import type { SajuResult } from '../lib/saju';
 import { pillarName } from '../lib/constants';
 import { PART_FLAVOR, type CarSpec } from '../lib/mapping';
+import { detectSinsal, SINSAL_EQUIP } from '../lib/sinsal';
 
 interface Props {
   saju: SajuResult;
@@ -29,6 +30,7 @@ const cardVariants = {
 
 export default function SajuSummary({ saju, carSpec }: Props) {
   const maxCount = Math.max(...ELEMENT_ORDER.map((e) => saju.elementCounts[e]), 1);
+  const sinsal = detectSinsal(saju);
 
   return (
     <motion.div className="saju-summary" variants={listVariants} initial="hidden" animate="show">
@@ -95,6 +97,32 @@ export default function SajuSummary({ saju, carSpec }: Props) {
               );
             })}
           </div>
+        </motion.div>
+      )}
+
+      {sinsal.length > 0 && (
+        <motion.div className="reveal-card" variants={cardVariants}>
+          <div className="reveal-card-title">
+            <span>✨</span>
+            <strong>특수 장비 (신살)</strong>
+          </div>
+          <div className="parts-grid">
+            {sinsal.map((hit) => {
+              const eq = SINSAL_EQUIP[hit.key];
+              return (
+                <div className="part-card sinsal-card" key={hit.key}>
+                  <span className="part-emoji">{eq.emoji}</span>
+                  <div>
+                    <div className="part-title">
+                      {eq.equip} <span className="part-source">{hit.key} · {hit.evidence}</span>
+                    </div>
+                    <div className="part-blurb">{eq.trait}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <p className="sinsal-note">* 신살은 대중적 정의 기준의 간이 판정입니다.</p>
         </motion.div>
       )}
 
