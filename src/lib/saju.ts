@@ -78,7 +78,7 @@ function monthPillar(yearStemIndex: number, month: number): Pillar {
 }
 
 // ---- 시주 계산: 오둔법 + 2시간 단위 지지 ----
-function hourBranchIndex(hour: number): number {
+export function hourBranchIndex(hour: number): number {
   // 23:00-00:59 -> 자(0), 01:00-02:59 -> 축(1) ...
   return Math.floor((((hour + 1) % 24)) / 2);
 }

@@ -4,6 +4,12 @@ export const ELEMENTS: Element[] = ['목', '화', '토', '금', '수'];
 
 export const STEM_NAMES = ['갑', '을', '병', '정', '무', '기', '경', '신', '임', '계'] as const;
 export const BRANCH_NAMES = ['자', '축', '인', '묘', '진', '사', '오', '미', '신', '유', '술', '해'] as const;
+export const BRANCH_ANIMALS = ['쥐', '소', '호랑이', '토끼', '용', '뱀', '말', '양', '원숭이', '닭', '개', '돼지'] as const;
+export const BRANCH_TIME_RANGE = [
+  '23:00~01:00', '01:00~03:00', '03:00~05:00', '05:00~07:00',
+  '07:00~09:00', '09:00~11:00', '11:00~13:00', '13:00~15:00',
+  '15:00~17:00', '17:00~19:00', '19:00~21:00', '21:00~23:00',
+] as const;
 
 export const STEM_ELEMENT: Element[] = ['목', '목', '화', '화', '토', '토', '금', '금', '수', '수'];
 export const BRANCH_ELEMENT: Element[] = ['수', '토', '목', '목', '토', '화', '화', '토', '금', '금', '토', '수'];

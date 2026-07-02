@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { RoadSegment } from '../lib/saju';
-import { ROAD_TYPE_LABEL } from '../lib/mapping';
+import { ROAD_TYPE_FLAVOR } from '../lib/mapping';
 import { pillarName } from '../lib/constants';
 
 interface Props {
@@ -9,16 +9,10 @@ interface Props {
   accentColor: string;
 }
 
-const ROAD_ICON: Record<RoadSegment['roadType'], string> = {
-  highway: '🛣️',
-  slope: '🌄',
-  curve: '🌀',
-  tunnel: '🕳️',
-};
-
 export default function FortuneRoad({ daeUn, accentColor }: Props) {
   const [activeIndex, setActiveIndex] = useState(0);
   const active = daeUn[activeIndex];
+  const activeFlavor = active ? ROAD_TYPE_FLAVOR[active.roadType] : null;
 
   return (
     <div className="fortune-road">
@@ -32,7 +26,7 @@ export default function FortuneRoad({ daeUn, accentColor }: Props) {
             className={`road-tile ${seg.roadType} ${i === activeIndex ? 'active' : ''}`}
             onClick={() => setActiveIndex(i)}
           >
-            <span className="road-tile-icon">{ROAD_ICON[seg.roadType]}</span>
+            <span className="road-tile-icon">{ROAD_TYPE_FLAVOR[seg.roadType].emoji}</span>
             <span className="road-tile-age">{seg.ageStart}~{seg.ageEnd}세</span>
           </button>
         ))}
@@ -54,7 +48,7 @@ export default function FortuneRoad({ daeUn, accentColor }: Props) {
         onChange={(e) => setActiveIndex(Number(e.target.value))}
       />
 
-      {active && (
+      {active && activeFlavor && (
         <motion.div
           key={activeIndex}
           className="road-detail"
@@ -63,8 +57,8 @@ export default function FortuneRoad({ daeUn, accentColor }: Props) {
           transition={{ duration: 0.25 }}
           style={{ borderColor: accentColor }}
         >
-          <strong>{pillarName(active.pillar.stemIndex, active.pillar.branchIndex)}대운</strong>
-          <span>{ROAD_TYPE_LABEL[active.roadType]} · 관계: {active.relation}</span>
+          <strong>{pillarName(active.pillar.stemIndex, active.pillar.branchIndex)}대운 · {activeFlavor.label}</strong>
+          <span>{activeFlavor.blurb} · 관계: {active.relation}</span>
         </motion.div>
       )}
     </div>

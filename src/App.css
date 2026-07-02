@@ -68,6 +68,43 @@
   white-space: nowrap;
 }
 
+.time-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.time-field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #9aa0ab;
+}
+
+.time-input {
+  background: #1c1f28;
+  border: 1px solid #2c2f3a;
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #fff;
+  font-size: 15px;
+  color-scheme: dark;
+}
+
+.time-input:disabled {
+  opacity: 0.4;
+}
+
+.time-hint {
+  font-size: 12px;
+  color: var(--accent);
+}
+
+.time-hint.muted {
+  color: #6b7280;
+}
+
 .gender-row {
   flex-direction: column;
   align-items: stretch;
@@ -159,8 +196,44 @@
   border: 1px solid #23262f;
 }
 
-.car-stage canvas {
+.car-stage-2d {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #171a22 0%, #0f1116 60%, #0b0d12 100%);
+}
+
+.road-bg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 54px;
+  height: 4px;
+  background-image: repeating-linear-gradient(90deg, #3a3f4a 0 24px, transparent 24px 48px);
+  opacity: 0.7;
+}
+
+.road-bg::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  bottom: -80px;
+  background: #1a1d24;
+  z-index: -1;
+}
+
+.car-wrap {
+  position: relative;
+  width: min(88%, 480px);
+}
+
+.car-illustration {
+  width: 100%;
+  height: auto;
   display: block;
+  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.45));
 }
 
 .speed-overlay {
@@ -245,10 +318,94 @@
   gap: 18px;
 }
 
-.summary-header p {
+.summary-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.hero-emoji {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.summary-hero h2 {
+  font-size: 22px;
+}
+
+.hero-tagline {
   color: #9aa0ab;
   font-size: 14px;
   margin-top: 4px;
+}
+
+.reveal-card {
+  background: #1a1d25;
+  border: 1px solid #262a35;
+  border-radius: 16px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reveal-card > p {
+  color: #cbd0d8;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.reveal-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+}
+
+.reveal-card-title span {
+  font-size: 20px;
+}
+
+.parts-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.part-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #14161d;
+  border: 1px solid #262a35;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.part-emoji {
+  font-size: 22px;
+}
+
+.part-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.part-source {
+  font-weight: 400;
+  color: #7d8290;
+  font-size: 11px;
+}
+
+.part-blurb {
+  font-size: 12px;
+  color: #9aa0ab;
+  margin-top: 2px;
+}
+
+.pillars-card .pillars-row {
+  margin-top: 2px;
 }
 
 .pillars-row {
@@ -317,38 +474,6 @@
   text-align: right;
   font-size: 12px;
   color: #9aa0ab;
-}
-
-.strength-line {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 13px;
-  color: #cbd0d8;
-}
-
-.tag {
-  background: var(--accent);
-  color: #14161d;
-  font-weight: 700;
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 999px;
-}
-
-.parts-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.part-chip {
-  font-size: 12px;
-  color: #cbd0d8;
-  background: #1c1f28;
-  border: 1px solid #2c2f3a;
-  padding: 6px 10px;
-  border-radius: 999px;
 }
 
 /* ---------- Fortune road ---------- */

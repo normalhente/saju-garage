@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import './App.css';
 import BirthForm from './components/BirthForm';
 import LoadingAssembly from './components/LoadingAssembly';
-import CarScene from './components/CarScene';
+import CarStage from './components/CarStage';
 import AccelerationFX from './components/AccelerationFX';
 import SajuSummary from './components/SajuSummary';
 import FortuneRoad from './components/FortuneRoad';
@@ -42,7 +42,7 @@ function App() {
             exit={{ opacity: 0 }}
           >
             <div className="car-stage">
-              <CarScene
+              <CarStage
                 profile={carSpec.profile}
                 parts={carSpec.parts}
                 acceleration={carSpec.acceleration}

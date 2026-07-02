@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { motion } from 'framer-motion';
 import type { BirthInput, Gender } from '../lib/saju';
+import { hourBranchIndex } from '../lib/saju';
+import { BRANCH_NAMES, BRANCH_ANIMALS, BRANCH_TIME_RANGE } from '../lib/constants';
 
 interface Props {
   onSubmit: (input: BirthInput) => void;
@@ -10,9 +12,12 @@ export default function BirthForm({ onSubmit }: Props) {
   const [year, setYear] = useState(1995);
   const [month, setMonth] = useState(1);
   const [day, setDay] = useState(1);
-  const [hour, setHour] = useState(12);
+  const [time, setTime] = useState('12:00');
   const [unknownHour, setUnknownHour] = useState(false);
   const [gender, setGender] = useState<Gender>('female');
+
+  const hour = Number(time.split(':')[0] ?? 12);
+  const branchIndex = hourBranchIndex(hour);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -70,26 +75,36 @@ export default function BirthForm({ onSubmit }: Props) {
         </label>
       </div>
 
-      <div className="field-row">
-        <label className={unknownHour ? 'disabled' : ''}>
-          시(24h)
-          <input
-            type="number"
-            value={hour}
-            min={0}
-            max={23}
-            disabled={unknownHour}
-            onChange={(e) => setHour(Number(e.target.value))}
-          />
-        </label>
-        <label className="checkbox-label">
-          <input
-            type="checkbox"
-            checked={unknownHour}
-            onChange={(e) => setUnknownHour(e.target.checked)}
-          />
-          출생시간 모름
-        </label>
+      <div className="time-field">
+        <div className="time-field-header">
+          <span>태어난 시각</span>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={unknownHour}
+              onChange={(e) => setUnknownHour(e.target.checked)}
+            />
+            모름
+          </label>
+        </div>
+        <input
+          type="time"
+          className="time-input"
+          value={time}
+          disabled={unknownHour}
+          onChange={(e) => setTime(e.target.value)}
+        />
+        {!unknownHour && (
+          <motion.p
+            key={branchIndex}
+            className="time-hint"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            🕐 {BRANCH_NAMES[branchIndex]}시 ({BRANCH_ANIMALS[branchIndex]}띠 시간) · {BRANCH_TIME_RANGE[branchIndex]}
+          </motion.p>
+        )}
+        {unknownHour && <p className="time-hint muted">시주 없이 년·월·일주로만 풀이해요</p>}
       </div>
 
       <div className="field-row gender-row">
