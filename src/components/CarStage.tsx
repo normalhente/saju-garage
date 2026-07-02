@@ -12,7 +12,6 @@ interface Props {
 }
 
 export default function CarStage({ profile, parts, acceleration, isAccelerating, onAccelerationComplete }: Props) {
-  const wheelSpin = useMotionValue(0);
   const carX = useMotionValue(0);
   const carSkew = useMotionValue(0);
   const roadX = useMotionValue(0);
@@ -49,16 +48,14 @@ export default function CarStage({ profile, parts, acceleration, isAccelerating,
       carSkew.set(carSkew.get() * 0.86);
     }
 
-    const idleSpinDeg = 60;
-    wheelSpin.set(wheelSpin.get() + (idleSpinDeg + speed * 1400) * dt);
-    roadX.set(roadX.get() - (idleSpinDeg * 0.6 + speed * 60) * dt);
+    roadX.set(roadX.get() - (36 + speed * 60) * dt);
   });
 
   return (
     <div className="car-stage-2d">
       <motion.div className="road-bg" style={{ backgroundPosition: roadBgPosition }} />
       <motion.div className="car-wrap" style={{ x: carX, skewX: carSkew }}>
-        <CarIllustration profile={profile} parts={parts} wheelSpin={wheelSpin} />
+        <CarIllustration profile={profile} parts={parts} />
       </motion.div>
     </div>
   );

@@ -1,7 +1,10 @@
-import { motion, type MotionValue } from 'framer-motion';
+import { useMemo } from 'react';
 import type { CarPart, ElementCarProfile } from '../lib/mapping';
 
 const WHEEL_CENTER_Y = 166;
+const CELL = 10;
+const COLS = 46;
+const ROWS = 20;
 
 interface SilhouetteConfig {
   frontX: number;
@@ -128,114 +131,131 @@ function buildGlassPath(c: SilhouetteConfig): string {
   return parts.join(' ');
 }
 
+interface RectZone {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+const inRect = (x: number, y: number, r: RectZone | null): boolean =>
+  !!r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+
+interface EllipseZone {
+  cx: number;
+  cy: number;
+  rx: number;
+  ry: number;
+}
+
+const inEllipse = (x: number, y: number, e: EllipseZone | null): boolean => {
+  if (!e) return false;
+  const dx = (x - e.cx) / e.rx;
+  const dy = (y - e.cy) / e.ry;
+  return dx * dx + dy * dy <= 1;
+};
+
+interface PixelCell {
+  x: number;
+  y: number;
+  color: string;
+}
+
+function rasterize(cfg: SilhouetteConfig, profile: ElementCarProfile, parts: CarPart[]): PixelCell[] {
+  const has = (p: CarPart) => parts.includes(p);
+  const bodyPath2D = new Path2D(buildBodyPath(cfg));
+  const glassPath2D = new Path2D(buildGlassPath(cfg));
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d')!;
+
+  const bumperTopY = cfg.bodyBottomY - cfg.bumperH;
+  const headlight: RectZone = { x: cfg.frontX + 3, y: bumperTopY + 2, w: 9, h: cfg.bumperH - 4 };
+  const taillight: RectZone = { x: cfg.rearX - 12, y: bumperTopY + 2, w: 9, h: cfg.bumperH - 4 };
+  const stripe: RectZone | null = has('racingStripe')
+    ? { x: cfg.frontX, y: (cfg.hoodY + bumperTopY) / 2 - 4, w: cfg.rearX - cfg.frontX, h: 8 }
+    : null;
+  const sunroof: RectZone | null = has('sunroofGlow')
+    ? { x: cfg.roofFrontX + 20, y: cfg.roofY + 6, w: Math.max(20, cfg.roofRearX - cfg.roofFrontX - 40), h: 10 }
+    : null;
+  const lightBar: RectZone | null = has('lightBar')
+    ? { x: cfg.frontX - 4, y: bumperTopY + cfg.bumperH * 0.15, w: cfg.roofFrontX - cfg.frontX * 0.5 - 30, h: 5 }
+    : null;
+  const spoilerOn = has('spoilerFlame');
+  const spoilerWing: RectZone = { x: cfg.rearX - 40, y: cfg.roofY - 14, w: 32, h: 5 };
+  const spoilerStrut1: RectZone = { x: cfg.rearX - 40, y: cfg.roofY - 14, w: 5, h: 16 };
+  const spoilerStrut2: RectZone = { x: cfg.rearX - 13, y: cfg.roofY - 14, w: 5, h: 16 };
+  const flame: EllipseZone = { cx: cfg.rearX + 4, cy: cfg.bodyBottomY - cfg.bumperH * 0.4, rx: 6, ry: 7 };
+
+  const tireColor = has('chromeWheels') ? '#e7ecef' : '#16181d';
+  const hubColor = has('chromeWheels') ? '#8b95a0' : '#4b4f57';
+
+  const cells: PixelCell[] = [];
+
+  for (let ry = 0; ry < ROWS; ry++) {
+    for (let rx = 0; rx < COLS; rx++) {
+      const x = rx * CELL + CELL / 2;
+      const y = ry * CELL + CELL / 2;
+      let color: string | null = null;
+
+      if (spoilerOn && (inRect(x, y, spoilerWing) || inRect(x, y, spoilerStrut1) || inRect(x, y, spoilerStrut2))) {
+        color = '#20232b';
+      } else if (spoilerOn && inEllipse(x, y, flame)) {
+        color = profile.accentColor;
+      } else if (inRect(x, y, lightBar)) {
+        color = profile.accentColor;
+      } else if (inRect(x, y, sunroof)) {
+        color = profile.accentColor;
+      } else if (inRect(x, y, stripe) && ctx.isPointInPath(bodyPath2D, x, y)) {
+        color = profile.accentColor;
+      } else if (inRect(x, y, headlight)) {
+        color = '#fff6cc';
+      } else if (inRect(x, y, taillight)) {
+        color = '#ff5b5b';
+      } else if (ctx.isPointInPath(bodyPath2D, x, y)) {
+        color = ctx.isPointInPath(glassPath2D, x, y) ? profile.glassColor : profile.bodyColor;
+      } else {
+        const d1 = Math.hypot(x - cfg.wheel1X, y - WHEEL_CENTER_Y);
+        const d2 = Math.hypot(x - cfg.wheel2X, y - WHEEL_CENTER_Y);
+        const d = Math.min(d1, d2);
+        if (d <= cfg.wheelR * 0.42) color = hubColor;
+        else if (d <= cfg.wheelR) color = tireColor;
+      }
+
+      if (color) cells.push({ x: rx * CELL, y: ry * CELL, color });
+    }
+  }
+
+  return cells;
+}
+
 interface Props {
   profile: ElementCarProfile;
   parts: CarPart[];
-  wheelSpin?: MotionValue<number>;
 }
 
-export default function CarIllustration({ profile, parts, wheelSpin }: Props) {
+export default function CarIllustration({ profile, parts }: Props) {
   const cfg = SILHOUETTES[profile.silhouette];
-  const bodyPath = buildBodyPath(cfg);
-  const glassPath = buildGlassPath(cfg);
-  const has = (p: CarPart) => parts.includes(p);
-  const bumperTopY = cfg.bodyBottomY - cfg.bumperH;
-
-  const wheelRimColor = has('chromeWheels') ? '#f2f5f7' : '#2a2d33';
-  const wheelHubColor = has('chromeWheels') ? '#9aa4ad' : '#4b4f57';
+  const cells = useMemo(() => rasterize(cfg, profile, parts), [cfg, profile, parts]);
 
   return (
-    <svg viewBox="0 0 460 200" className="car-illustration" role="img" aria-label={profile.label}>
-      <defs>
-        <linearGradient id="bodyShine" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.35" />
-          <stop offset="35%" stopColor="#ffffff" stopOpacity="0" />
-        </linearGradient>
-        <clipPath id="bodyClip">
-          <path d={bodyPath} />
-        </clipPath>
-      </defs>
-
-      {/* ground shadow */}
+    <svg
+      viewBox={`0 0 ${COLS * CELL} ${ROWS * CELL}`}
+      className="car-illustration pixel"
+      shapeRendering="crispEdges"
+      role="img"
+      aria-label={profile.label}
+    >
       <ellipse
         cx={(cfg.frontX + cfg.rearX) / 2}
-        cy={WHEEL_CENTER_Y + cfg.wheelR + 6}
-        rx={(cfg.rearX - cfg.frontX) / 2 + 10}
-        ry={10}
+        cy={WHEEL_CENTER_Y + cfg.wheelR + 10}
+        rx={(cfg.rearX - cfg.frontX) / 2}
+        ry={7}
         fill="#000"
-        opacity={0.35}
+        opacity={0.32}
       />
-
-      {/* wheels (behind body) */}
-      {[cfg.wheel1X, cfg.wheel2X].map((wx, i) => (
-        <motion.g key={i} style={{ transformOrigin: `${wx}px ${WHEEL_CENTER_Y}px`, rotate: wheelSpin }}>
-          <circle cx={wx} cy={WHEEL_CENTER_Y} r={cfg.wheelR} fill={wheelRimColor} stroke="#111" strokeWidth={3} />
-          <circle cx={wx} cy={WHEEL_CENTER_Y} r={cfg.wheelR * 0.42} fill={wheelHubColor} />
-          {[0, 60, 120, 180, 240, 300].map((deg) => (
-            <line
-              key={deg}
-              x1={wx}
-              y1={WHEEL_CENTER_Y}
-              x2={wx + Math.cos((deg * Math.PI) / 180) * cfg.wheelR * 0.9}
-              y2={WHEEL_CENTER_Y + Math.sin((deg * Math.PI) / 180) * cfg.wheelR * 0.9}
-              stroke="#111"
-              strokeWidth={2}
-            />
-          ))}
-        </motion.g>
+      {cells.map((c, i) => (
+        <rect key={i} x={c.x} y={c.y} width={CELL} height={CELL} fill={c.color} />
       ))}
-
-      {/* body */}
-      <path d={bodyPath} fill={profile.bodyColor} stroke="#00000055" strokeWidth={2} />
-      <path d={bodyPath} fill="url(#bodyShine)" />
-
-      {/* glass */}
-      <path d={glassPath} fill={profile.glassColor} opacity={0.92} />
-
-      {/* headlight + taillight */}
-      <rect x={cfg.frontX + 3} y={bumperTopY + 2} width={9} height={cfg.bumperH - 4} rx={2.5} fill="#fff6cc" />
-      <rect x={cfg.rearX - 12} y={bumperTopY + 2} width={9} height={cfg.bumperH - 4} rx={2.5} fill="#ff5b5b" />
-
-      {/* racing stripe */}
-      {has('racingStripe') && (
-        <rect
-          x={cfg.frontX}
-          y={(cfg.hoodY + bumperTopY) / 2 - 4}
-          width={cfg.rearX - cfg.frontX}
-          height={8}
-          fill={profile.accentColor}
-          opacity={0.85}
-          clipPath="url(#bodyClip)"
-        />
-      )}
-
-      {/* sunroof glow */}
-      {has('sunroofGlow') && (
-        <rect
-          x={cfg.roofFrontX + 20}
-          y={cfg.roofY + 6}
-          width={Math.max(20, cfg.roofRearX - cfg.roofFrontX - 40)}
-          height={10}
-          rx={4}
-          fill={profile.accentColor}
-          opacity={0.9}
-        />
-      )}
-
-      {/* light bar */}
-      {has('lightBar') && (
-        <rect x={cfg.frontX - 4} y={bumperTopY + cfg.bumperH * 0.15} width={cfg.roofFrontX - cfg.frontX * 0.5 - 30} height={5} rx={2.5} fill={profile.accentColor} />
-      )}
-
-      {/* spoiler + flame */}
-      {has('spoilerFlame') && (
-        <g>
-          <rect x={cfg.rearX - 40} y={cfg.roofY - 14} width={32} height={5} rx={2} fill="#20232b" stroke={profile.accentColor} strokeWidth={1} />
-          <rect x={cfg.rearX - 40} y={cfg.roofY - 14} width={5} height={16} fill="#20232b" />
-          <rect x={cfg.rearX - 13} y={cfg.roofY - 14} width={5} height={16} fill="#20232b" />
-          <ellipse cx={cfg.rearX + 4} cy={cfg.bodyBottomY - cfg.bumperH * 0.4} rx={6} ry={7} fill={profile.accentColor} opacity={0.9} />
-        </g>
-      )}
     </svg>
   );
 }
